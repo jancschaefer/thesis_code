@@ -13,25 +13,31 @@ from Code.jsTranslate import translate
 
 # %% environment
 
-dataPath = (os.getcwd() + '/02_Data/')
+try:
+    filePath = __file__
+    head, tail = os.path.split(filePath)
+    filePath = head + '/..'
+except:
+    filePath = os.getcwd()    
+
+dataPath = (filePath + '/02_Data/')
 logger.info('Writing to ' + dataPath)
-translationEngine = 'azure'
+translationEngine = 'azure' ## select either azure or deepl
 
 
 # %% Stuff
-if False:
-    # %% Initial data load
-    logger.info('Reading Stata File')
-    data = pd.read_stata('/Users/janschaefer/Dropbox/10_Thesis/02_Data/save_step4.dta')
-
-    # %% writing parquet
-    logger.info('Writing parquet to disk.')
-    pq.write_table(pa.Table.from_pandas(data), dataPath+'/data.parquet')
+#if False:
+#    # %% Initial data load
+#    logger.info('Reading Stata File')
+#    data = pd.read_stata('/Users/janschaefer/Dropbox/10_Thesis/02_Data/save_step4.dta', encoding='utf-8')
+#
+#    # %% writing parquet
+#    logger.info('Writing parquet to disk.')
+#    pq.write_table(pa.Table.from_pandas(data), dataPath+'/data.parquet')
 
 # %% Initial data load
 logger.info('Reading Parquet File')
-rawData = pq.read_table(dataPath+'/data.parquet').to_pandas()
-data = rawData.copy()
+data = pq.read_table(dataPath+'/data.parquet').to_pandas()
 
 
 # %% Data Summary
@@ -42,11 +48,11 @@ logger.info('Dimensions of data: %s', data.shape)
 
 # %%  create needTranslation subset
 
-file = open("iterate.txt","r") 
+file = open(filePath+"/iterate.txt","r") 
 iterate = file.read()
 file.close()
 startIndex = int(iterate)
-endIndex    = startIndex + 300
+endIndex    = startIndex + 20
 
 logger.info('Translating ' + str(startIndex) + ' until ' + str(endIndex) + '.')
 
@@ -80,7 +86,7 @@ for index, item in needTranslation[needTranslation['Trade_English']==""].iterrow
         logger.critical('Stopping translation attempt. index %s, startIndex %s ,endIndex %s, i %s,maxI = %s, errcount = %s,maxErrors =  %s,',index,startIndex,endIndex,i,maxI,errcount,maxErrors)
         break;
 
-    if (item['Country_Iso'] in countriesDeepl) == False and translationEngine == 'deepl': # Only translate languages that are supported.
+    if (item['Country_Iso'] in countriesDeepl) == False and translationEngine == 'deepl': # Only translate languages that are supported, when deepl is selected
         data.loc[index,"LastError"] = "ERR_TRANSLATE:LANGUAGE_UNAVAILABLE"
         logger.warning(item['Country_Iso'] + ' not supported')
         continue;
@@ -94,15 +100,14 @@ for index, item in needTranslation[needTranslation['Trade_English']==""].iterrow
 
     len(text) == 0
     if len(text) == 0:
-        needTranslation.loc[index]['Trade_Original'] = np.NaN # set to NaN if text is 0 characters long
-        needTranslation.loc[index]['Trade_English'] = np.NaN
+        #needTranslation.loc[index]['Trade_Original'] = np.NaN # set to NaN if text is 0 characters long
+        #needTranslation.loc[index]['Trade_English'] = np.NaN
         continue
     else:
-            len(text)
             if (translationEngine == 'deepl'): # DEEPL Translation
                 try:
                     # Translate using deepl translate API
-                    translation = deepl.translate(item['Trade_Original'], target="EN")
+                    translation = deepl.translate(text, target="EN")
                     data.loc[index,"Trade_English"] = translation[0] # store which engine was used
                     data.loc[index,"engineUsed"] = translationEngine
                     
@@ -121,9 +126,9 @@ for index, item in needTranslation[needTranslation['Trade_English']==""].iterrow
             if (translationEngine == 'azure'): # Azure Translation
                 try:
                     # Translate using deepl translate API
-                    translation = translate(item['Trade_Original'], target="en-us")
-                    data.loc[index,"Trade_English"] = translation[0] # store which engine was used
-                    data.loc[index,"engineUsed"] = translationEngine
+                    translation = translate(text, target="en-us")
+                    data.loc[index,"Trade_English"] = translation
+                    data.loc[index,"engineUsed"] = translationEngine # store which engine was used
                     
                     logger.info("Translated: %s > %s | using %s",item['Trade_Original'],translation,translationEngine)
                     
@@ -143,6 +148,7 @@ logger.info('Writing parquet to disk.')
 pq.write_table(pa.Table.from_pandas(data), dataPath+'/data_translated.parquet')
 logger.info('Writing Debug to disk.')
 csvDebug = data.loc[startIndex:endIndex].to_csv(dataPath+'/debug.csv')
+logger.info('Finished Writing Files.')
 
  # %% Stuff
 #data.iloc[startIndex:startIndex + 300,0:6].to_csv(dataPath+'/debug2.csv')
