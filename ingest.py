@@ -7,7 +7,7 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 #import deepl
 
-numTranslate = 8000
+numTranslate = 10
 
 # %% environment
 
