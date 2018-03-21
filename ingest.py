@@ -119,7 +119,8 @@ for index, item in needTranslation[needTranslation['Trade_English']==""].iterrow
         needTranslation.loc[index]['Trade_English'] = np.NaN
         continue
     else:
-        text = item['Trade_Original'].encode('utf8').strip() # clean string
+        text = item['Trade_Original'].strip() # clean string
+        text = convertBrokenText(text)
 
     len(text) == 0
     if len(text) == 0:
@@ -134,7 +135,7 @@ for index, item in needTranslation[needTranslation['Trade_English']==""].iterrow
                     data.loc[index,"Trade_English"] = translation[0] # store which engine was used
                     data.loc[index,"engineUsed"] = translationEngine
                     
-                    logger.info("Translated: %s > %s | using %s",item['Trade_Original'],translation,translationEngine)
+                    logger.info("Translated: %s > %s | using %s",text,translation,translationEngine)
                     
                     file = open("iterate.txt","w") 
                     file.write(str(index))
