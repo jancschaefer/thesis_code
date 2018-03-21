@@ -1,15 +1,11 @@
 # -*- coding: utf-8 -*-
 # %% Import Block
-import os
-import pandas as pd
+import os, sys
+#import pandas as pd
 import numpy as np
 import pyarrow as pa
 import pyarrow.parquet as pq
 import deepl
-
-from Code.dolog import logger
-from Code.jsTranslate import translate
-
 
 # %% environment
 
@@ -18,10 +14,37 @@ try:
     head, tail = os.path.split(filePath)
     filePath = head + '/..'
 except:
-    filePath = os.getcwd()    
+    filePath = os.getcwd()  
 
+
+if(filePath == '/..'):
+    head, tail = os.path.split(os.getcwd())
+    filePath = head + '/..'
+    filePath = os.getcwd() + '/..' 
+    
+os.chdir(filePath)
+filePath = os.getcwd()
+    
+print(os.getcwd())
+print(filePath)
+
+
+
+try:
+    from Code.dolog import logger
+    from Code.jsTranslate import translate
+    from Code.convert import convertBrokenText
+except:
+    try:
+        from dolog import logger
+        from jsTranslate import translate
+        from convert import convertBrokenText
+    except:
+        sys.exit("Could not import necessary Code blocks.")
+
+logger.info('WD is set to   ' + filePath)
 dataPath = (filePath + '/02_Data/')
-logger.info('Writing to ' + dataPath)
+logger.info('Writing to     ' + dataPath)
 translationEngine = 'azure' ## select either azure or deepl
 
 
