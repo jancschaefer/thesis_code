@@ -77,7 +77,7 @@ file = open(filePath+"/iterate.txt","r")
 iterate = file.read()
 file.close()
 startIndex = int(iterate)
-endIndex    = startIndex + 10
+endIndex    = startIndex + numTranslate
 
 logger.info('Translating ' + str(startIndex) + ' until ' + str(endIndex) + '.')
 
@@ -99,7 +99,7 @@ logger.info('Accepting Countries: %s', countriesDeepl)
 # %% perform actual translation
 
 i=errcount  = 0; # starting value
-maxI        = 10; # how many translations should be attempted? | 0 for unlimited
+maxI        = numTranslate; # how many translations should be attempted? | 0 for unlimited
 maxErrors   = 20;
 
 logger.info('Starting translation')
