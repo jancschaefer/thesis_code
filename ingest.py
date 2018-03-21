@@ -32,12 +32,12 @@ print(filePath)
 
 try:
     from Code.dolog import logger
-    from Code.jsTranslate import translate
+    from Code.jsTranslate_H1 import translate
     from Code.convert import convertBrokenText
 except:
     try:
         from dolog import logger
-        from jsTranslate import translate
+        from jsTranslate_H1 import translate
         from convert import convertBrokenText
     except:
         sys.exit("Could not import necessary Code blocks.")
@@ -75,7 +75,7 @@ file = open(filePath+"/iterate.txt","r")
 iterate = file.read()
 file.close()
 startIndex = int(iterate)
-endIndex    = startIndex + 5000
+endIndex    = startIndex + 10
 
 logger.info('Translating ' + str(startIndex) + ' until ' + str(endIndex) + '.')
 
@@ -97,7 +97,7 @@ logger.info('Accepting Countries: %s', countriesDeepl)
 # %% perform actual translation
 
 i=errcount  = 0; # starting value
-maxI        = 5000; # how many translations should be attempted? | 0 for unlimited
+maxI        = 10; # how many translations should be attempted? | 0 for unlimited
 maxErrors   = 20;
 
 logger.info('Starting translation')
