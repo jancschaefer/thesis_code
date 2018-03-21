@@ -76,6 +76,11 @@ logger.info('Dimensions of data: %s', data.shape)
 file = open(filePath+"/iterate.txt","r") 
 iterate = file.read()
 file.close()
+
+file = open("iterate.bak","w") 
+file.write(str(iterate))
+file.close()
+
 startIndex = int(iterate)
 endIndex    = startIndex + numTranslate
 
@@ -134,6 +139,7 @@ for index, item in needTranslation[needTranslation['Trade_English']==""].iterrow
     else:
             if (translationEngine == 'deepl'): # DEEPL Translation
                 try:
+                    import deepl
                     # Translate using deepl translate API
                     translation = deepl.translate(text, target="EN")
                     data.loc[index,"Trade_English"] = translation[0] # store which engine was used
