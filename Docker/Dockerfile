@@ -10,8 +10,8 @@ FROM continuumio/miniconda
 # Adding SSH Keys
 ADD ./id_rsa /root/.ssh/id_rsa
 ADD ./id_rsa.pub /root/.ssh/id_rsa.pub
-ADD /Users/janschaefer/Dropbox/10_Thesis/02_Data/data.parquet /root/02_Data/data.parquet
-ADD /Users/janschaefer/Dropbox/10_Thesis/iterate.txt /root/iterate.txt
+COPY ../../02_Data /root/02_Data/
+COPY ../../iterate.txt /root/iterate.txt
 
 # Install Python.
 RUN \
@@ -24,7 +24,12 @@ RUN \
   ssh -T git@github.com -oStrictHostKeyChecking=no && \
   cd /root && \
   git clone git@github.com:jancschaefer/thesis_code.git && \
-  mv thesis_code/ Code 
+  mv thesis_code/ Code && \
+  cd Code && \
+  git branch checkout server && \
+  git branch --set-upstream-to=origin/server server && \
+  git pull
+  
   
 # Define working directory.
 WORKDIR /root
