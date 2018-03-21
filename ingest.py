@@ -75,7 +75,7 @@ file = open(filePath+"/iterate.txt","r")
 iterate = file.read()
 file.close()
 startIndex = int(iterate)
-endIndex    = startIndex + 20
+endIndex    = startIndex + 5000
 
 logger.info('Translating ' + str(startIndex) + ' until ' + str(endIndex) + '.')
 
@@ -97,8 +97,10 @@ logger.info('Accepting Countries: %s', countriesDeepl)
 # %% perform actual translation
 
 i=errcount  = 0; # starting value
-maxI        = 500; # how many translations should be attempted? | 0 for unlimited
+maxI        = 5000; # how many translations should be attempted? | 0 for unlimited
 maxErrors   = 20;
+
+logger.info('Starting translation')
 
 for index, item in needTranslation[needTranslation['Trade_English']==""].iterrows():
 
@@ -154,7 +156,7 @@ for index, item in needTranslation[needTranslation['Trade_English']==""].iterrow
                     data.loc[index,"Trade_English"] = translation
                     data.loc[index,"engineUsed"] = translationEngine # store which engine was used
                     
-                    logger.info("Translated: %s > %s | using %s",item['Trade_Original'],translation,translationEngine)
+                    logger.info("Translated: %s > %s | using %s",text,translation,translationEngine)
                     
                     file = open("iterate.txt","w") 
                     file.write(str(index))
@@ -169,10 +171,11 @@ for index, item in needTranslation[needTranslation['Trade_English']==""].iterrow
 
 # %% writing to disk
 logger.info('Writing parquet to disk.')
-pq.write_table(pa.Table.from_pandas(data), dataPath+'/data_translated.parquet')
+pq.write_table(pa.Table.from_pandas(data), dataPath+'/data.parquet')
 logger.info('Writing Debug to disk.')
 csvDebug = data.loc[startIndex:endIndex].to_csv(dataPath+'/debug.csv')
 logger.info('Finished Writing Files.')
+logger.info('Finished with index %s',index)
 
  # %% Stuff
 #data.iloc[startIndex:startIndex + 300,0:6].to_csv(dataPath+'/debug2.csv')
