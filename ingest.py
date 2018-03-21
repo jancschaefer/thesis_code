@@ -5,7 +5,9 @@ import os, sys
 import numpy as np
 import pyarrow as pa
 import pyarrow.parquet as pq
-import deepl
+#import deepl
+
+numTranslate = 8000
 
 # %% environment
 
