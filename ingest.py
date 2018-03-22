@@ -7,7 +7,7 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 #import deepl
 
-numTranslate = 10
+numTranslate = 5000
 
 # %% environment
 
@@ -49,8 +49,18 @@ dataPath = (filePath + '/02_Data/')
 logger.info('Writing to     ' + dataPath)
 translationEngine = 'azure' ## select either azure or deepl
 
+# %% Already started? If yes, cancel.
+file = open(filePath+"/started.txt","r") 
+started = file.read()
+file.close()
 
-# %% Stuff
+if started=="started":
+    logger.critical('Already executing');
+    exit();
+    
+
+
+# %% Convert Stata file to parquet
 #if False:
 #    # %% Initial data load
 #    logger.info('Reading Stata File')
@@ -106,6 +116,11 @@ logger.info('Accepting Countries: %s', countriesDeepl)
 i=errcount  = 0; # starting value
 maxI        = numTranslate; # how many translations should be attempted? | 0 for unlimited
 maxErrors   = 20;
+
+
+file = open("started.txt","w") 
+file.write(str("started"))
+file.close()
 
 logger.info('Starting translation')
 
@@ -184,6 +199,10 @@ logger.info('Writing Debug to disk.')
 csvDebug = data.loc[startIndex:endIndex].to_csv(dataPath+'/debug.csv')
 logger.info('Finished Writing Files.')
 logger.info('Finished with index %s',index)
+
+file = open("started.txt","w") 
+file.write(str("done"))
+file.close()
 
  # %% Stuff
 #data.iloc[startIndex:startIndex + 300,0:6].to_csv(dataPath+'/debug2.csv')
