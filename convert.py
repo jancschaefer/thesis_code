@@ -41,7 +41,8 @@ def convert(text):
         return text
         
 def remove_non_ascii_1(text):
-    return text.encode(sys.stdout.encoding, 'ignore').decode(sys.stdout.encoding)
+    return text
+ #   return text.encode(sys.stdout.encoding, 'ignore').decode(sys.stdout.encoding)
 
 def convertBrokenText(text):
     text = convertGerman(text)
