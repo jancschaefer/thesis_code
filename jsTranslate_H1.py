@@ -23,7 +23,7 @@ def translate(text, target = 'en-us'):
     
     def get_suggestions ():
         headers = {'Ocp-Apim-Subscription-Key': subscriptionKey}
-        conn = http.client.HTTPSConnection(proxy,port)
+        conn = http.client.HTTPSConnection(proxy,port,timeout=3)
         conn.set_tunnel(host)
         conn.request ("GET", path + params, None, headers)
         response = conn.getresponse ()
