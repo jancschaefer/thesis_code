@@ -104,6 +104,11 @@ needTranslation = needTranslation.iloc[0:,[1,2,4,5]]
 
 logger.info('%s of %s Records to be translated',needTranslation.shape[0], (endIndex-startIndex))
 
+# %% Stop if iteration > numRecords
+
+if (int(iterate) >= data.shape[0]):
+    exit()
+
 # %% set supported countries
 countries = needTranslation['Country_Iso'].unique()
 logger.info('Found Countries: %s', countries)
