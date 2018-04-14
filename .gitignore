@@ -132,3 +132,4 @@ venv.bak/
 # End of https://www.gitignore.io/api/macos,python
 /iterate.txt
 *.log
+/Cleaning/sentences
