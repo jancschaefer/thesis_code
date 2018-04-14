@@ -15,12 +15,16 @@ subscriptionKey = '209779672b034b5ab5aed1285b3c0875'
 host = 'api.microsofttranslator.com'
 path = '/V2/Http.svc/Translate'
 
+proxy = "proxy.henkelgroup.net"
+port = 80
+
 def translate(text, target = 'en-us'):
     params = '?to=' + target + '&text=' + urllib.parse.quote (text)
     
     def get_suggestions ():
         headers = {'Ocp-Apim-Subscription-Key': subscriptionKey}
-        conn = http.client.HTTPSConnection(host)
+        conn = http.client.HTTPSConnection(proxy,port,timeout=3)
+        conn.set_tunnel(host)
         conn.request ("GET", path + params, None, headers)
         response = conn.getresponse ()
         return response.read ()
