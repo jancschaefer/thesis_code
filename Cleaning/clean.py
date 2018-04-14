@@ -32,13 +32,18 @@ logger.info('Reading Parquet File')
 data = pq.read_table(dataPath + '/data.parquet').to_pandas()
 
 # %% Clean Data with pandas
-withETD = data[data['Trade_English'] != ""].copy()  # Remove rows with empty trade descriptions
+withETD = data[data['Trade_English'] != ""].copy()  # Remove rows with empty trade descriptions :: ETD ^= English Trade Description
 
-withETD.loc[:,'Trade_English'] = withETD.loc[:,'Trade_English'].str.replace('Registered item:','')  # Remove registered item for german companies
-withETD.loc[:,'Trade_English'] = withETD.loc[:,'Trade_English'].str.replace('ivnost:','')  # Remove ivnost for chech companies
-withETD.loc[:,'Trade_English'] = withETD.loc[:,'Trade_English'].str.replace(r'([\:\?\,\.\|\(\)\"\'\\]\s*){2,}', '')  # Remove continuous special characters
-withETD.loc[:,'Trade_English'] = withETD.loc[:,'Trade_English'].str.lower()  # Convert all text to lowercase
-withETD.loc[:,'Trade_English'] = withETD.loc[:,'Trade_English'].str.strip()  # Remove leading and tailing spaces
+withETD.loc[:, 'Trade_English'] = withETD.loc[:, 'Trade_English'].astype(str)
+
+withETD.loc[:, 'Trade_English'] = withETD.loc[:, 'Trade_English'].str.replace('Registered item:','')  # Remove registered item for german companies
+withETD.loc[:, 'Trade_English'] = withETD.loc[:, 'Trade_English'].str.replace('ivnost:','')  # Remove ivnost for chech companies
+withETD.loc[:, 'Trade_English'] = withETD.loc[:, 'Trade_English'].str.replace(r'([\:\?\,\.\|\(\)\"\'\\]\s*){1,}', ' ')  # Remove special characters
+withETD.loc[:, 'Trade_English'] = withETD.loc[:, 'Trade_English'].str.replace(r'([\s+])', ' ')  # Remove multiple whitespaces
+withETD.loc[:, 'Trade_English'] = withETD.loc[:, 'Trade_English'].str.replace(r'[^A-Za-z\s]+', '')  # only keep text
+
+withETD.loc[:, 'Trade_English'] = withETD.loc[:, 'Trade_English'].str.lower()  # Convert all text to lowercase
+withETD.loc[:, 'Trade_English'] = withETD.loc[:, 'Trade_English'].str.strip()  # Remove leading and tailing spaces
 
 withETD = withETD[withETD['Trade_English'] != ""].copy()  # Remove remaining rows with empty trade descriptions
 
@@ -83,3 +88,4 @@ withETD.loc[:, 'numwords'] = numwords
 
 # %% write clean data to disk
 pq.write_table(pa.Table.from_pandas(withETD), dataPath + '/data.clean.parquet')
+withETD.loc[:, 'Trade_English'].to_csv(dataPath + '/words.txt')
