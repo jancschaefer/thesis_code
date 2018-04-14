@@ -3,6 +3,12 @@
 import sys
 import pyarrow as pa
 import pyarrow.parquet as pq
+import nltk
+from nltk.stem import WordNetLemmatizer  # working with word stems
+
+# tokenizer
+from nltk.corpus import stopwords
+from sklearn.feature_extraction import text
 
 # %% Logging Setup
 
@@ -35,6 +41,45 @@ withETD.loc[:,'Trade_English'] = withETD.loc[:,'Trade_English'].str.lower()  # C
 withETD.loc[:,'Trade_English'] = withETD.loc[:,'Trade_English'].str.strip()  # Remove leading and tailing spaces
 
 withETD = withETD[withETD['Trade_English'] != ""].copy()  # Remove remaining rows with empty trade descriptions
+
+# %% prepare stopwords and other language processing
+
+nltk.download('stopwords')  # used to remove common words without meaning, e.g. "and"
+
+stop1 = set(text.ENGLISH_STOP_WORDS)  # Load stopwords
+stop2 = set(stopwords.words('english'))  # load further stopwords
+stop = stop1 | stop2
+
+# %% tokenizing the data
+
+tradeEnglish = withETD.loc[:, 'Trade_English']
+
+tradeEnglish = tradeEnglish.str.lower().str.split()  # split every trade description into single words
+tradeEnglish = tradeEnglish.apply(lambda x: [item for item in x if item not in stop])  # for every cell remove stop words
+
+# %% working with word stems
+
+nltk.download('wordnet')  # used for working with word stems
+
+lem = WordNetLemmatizer()  # create lemmatizer
+
+tradeEnglish = tradeEnglish.apply(lambda x: [lem.lemmatize(item) for item in x])  # reduce words to stems; e.g. products => product
+
+# %% Join back with main data
+withETD.loc[:, 'Trade_English'] = tradeEnglish
+
+# %% Exploratory
+
+# Get number of words for every company. This text quite some time as it is executing on only one core.
+
+index = 0
+numwords = []
+withETD.loc[:, 'numwords'] = 0
+for index, row in withETD.iterrows():
+	numwords.append(len(row['Trade_English']))
+
+withETD.loc[:, 'numwords'] = numwords
+
 
 # %% write clean data to disk
 pq.write_table(pa.Table.from_pandas(withETD), dataPath + '/data.clean.parquet')
