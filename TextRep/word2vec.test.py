@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import sys
 import pprint
+from scipy import stats
 # %% Logging Setup
 
 try:
@@ -20,8 +21,9 @@ logger.info('Writing to	 ' + dataPath)
 # %% w2v
 
 from gensim.models import Word2Vec
-
 model = Word2Vec.load(dataPath + 'word2vec.model')
+
+# %% testing // sanity checks
 
 pp = pprint.PrettyPrinter(indent=4)
 
@@ -34,5 +36,9 @@ pp.pprint(model.wv.most_similar(['cattle']))
 print('----------------- Similar to grocery -----------------')
 pp.pprint(model.wv.most_similar(['grocery']))
 
-print('----------------- Similar to gasoline -----------------')
+print('----------------- Similar to gas1oline -----------------')
 pp.pprint(model.wv.most_similar(['gasoline']))
+
+print('----------------- vector for gasoline -----------------')
+pp.pprint(model.wv['gasoline'])
+pp.pprint(stats.describe(model.wv['gasoline']))
