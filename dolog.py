@@ -1,6 +1,8 @@
 # %% debug
 import logging
-logger = logging.getLogger(__name__)
+import platform
+
+logger = logging.getLogger(platform.node())
 logger.setLevel(logging.INFO)
 
 # create a file handler
