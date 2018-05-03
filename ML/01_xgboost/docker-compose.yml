@@ -1,0 +1,24 @@
+version: '3.6'
+services:
+  doml:
+    privileged: true
+    build: .
+    volumes:
+      - ${PWD}/../../../02_Data/converted.dropped.parquet:/app/02_Data/converted.dropped.parquet
+      - ${PWD}/../../../Code/ML/01_xgboost/xgb.py:/app/Code/ML/01_xgboost/xgb.py
+      - ${PWD}/../../../Code/dolog.py:/app/Code/dolog.py
+      - ${PWD}/../../../Code/environment.py:/app/Code/environment.py
+    ports:
+      - 8888:8888
+    stdin_open: true
+    tty: true
+    command:
+      - /bin/bash
+    #  - /opt/conda/bin/jupyter notebook --notebook-dir=/opt/notebooks --ip='*' --port=8888 --no-browser
+    #  - 
+#    dns:
+#      - 139.3.62.2
+#      - 139.3.63.2
+#      - 158.98.224.20
+#      - 1.1.1.1
+#      - 9.9.9.9
