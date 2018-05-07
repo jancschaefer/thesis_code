@@ -4,10 +4,11 @@ services:
     privileged: true
     build: .
     volumes:
-      - ${PWD}/../../../02_Data/converted.dropped.parquet:/app/02_Data/converted.dropped.parquet
+      - ${PWD}/../../../02_Data/converted.dropped.parquet:/app/02_Data/converted.ft.dropped.parquet
       - ${PWD}/../../../Code/ML/01_xgboost/xgb.py:/app/Code/ML/01_xgboost/xgb.py
       - ${PWD}/../../../Code/dolog.py:/app/Code/dolog.py
       - ${PWD}/../../../Code/environment.py:/app/Code/environment.py
+      - /opt/ovml:/opt/ovml
     ports:
       - 8888:8888
     stdin_open: true
