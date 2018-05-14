@@ -1,0 +1,14 @@
+version: '3.6'
+services:
+  doml:
+    privileged: true
+    build: .
+    volumes:
+      - ${PWD}/../../../02_Data/sentences.csv:/app/02_Data/sentences.csv
+      - ${PWD}/../../../Code/TextRep/Doc2Vec/doc2vec.py:/app/Code/TextRep/Doc2Vec/doc2vec.py
+      - ${PWD}/../../../Code/dolog.py:/app/Code/dolog.py
+      - ${PWD}/../../../Code/environment.py:/app/Code/environment.py
+    stdin_open: true
+    tty: true
+    command:
+      - /bin/bash
