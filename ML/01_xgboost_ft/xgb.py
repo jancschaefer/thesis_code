@@ -38,7 +38,7 @@ data = pq.read_table(dataPath + '/converted.ft.dropped.parquet').to_pandas()
 
 # %% reduce data for testing purposes
 
-data = data.sample(500)
+data = data.sample(30000)
 
 
 # %% split data into X and y
@@ -67,9 +67,9 @@ eval_set  = [(X_train,X_test), (y_train,y_test)]
 model = XGBClassifier(
 	silent=False,
 	verbose_eval=True,
-	max_depth=25,
+	max_depth=45,
 	nthread=(multiprocessing.cpu_count()-1),
-	n_estimators=50,
+	n_estimators=15,
 	eval_set=eval_set
 )
 model.fit(X_train, np.ravel(y_train,order="C"))
