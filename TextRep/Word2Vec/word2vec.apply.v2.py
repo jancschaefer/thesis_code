@@ -14,86 +14,98 @@ import pandas as pd
 import pyarrow as pa
 import platform
 
-print('starting on %s',platform.node())
+print("starting on %s", platform.node())
 
 # %% Logging Setup
 
-import os,inspect
+import os, inspect
+
 currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 parentdir = os.path.dirname(currentdir)
-sys.path.insert(0,parentdir)
+sys.path.insert(0, parentdir)
 
 try:
-	from Code.dolog import logger
-	from Code.environment import filePath
+    from Code.dolog import logger
+    from Code.environment import filePath
 except:
-	try:
-		from dolog import logger
-		from environment import filePath
-	except:
-		sys.exit("Could not import necessary Code blocks.")
+    try:
+        from dolog import logger
+        from environment import filePath
+    except:
+        sys.exit("Could not import necessary Code blocks.")
 
-logger.info('WD is set to   ' + filePath)
-dataPath = (filePath + '/02_Data/')
-logger.info('Writing to	 ' + dataPath)
+logger.info("WD is set to   " + filePath)
+dataPath = filePath + "/02_Data/"
+logger.info("Writing to	 " + dataPath)
 
 # %% Import Data
 
-logger.info('Reading Parquet File')
-data = pq.read_table(dataPath + '/data.clean.parquet').to_pandas()
+logger.info("Reading Parquet File")
+data = pq.read_table(dataPath + "/data.clean.parquet").to_pandas()
 
 # %% load w2v model
 
-logger.info('Loading Model')
+logger.info("Loading Model")
 from gensim.models import Word2Vec
-model = Word2Vec.load(dataPath + 'word2vec.model')
+
+model = Word2Vec.load(dataPath + "word2vec.model")
 
 # %% Conversion Function
 
-def workDataFrame (currentData):
 
-	#create empty data frame for working
-	converted = pd.DataFrame(columns=range(0,len(currentData.columns) + 300))
-	df = pd.DataFrame(columns=range(0,300)) # vectors
-	df = df.add_prefix('TE_') # prefix for vectors
-	columns = currentData.columns # naming
-	columns = columns.append(df.columns) # combine
-	converted.columns = columns # set names
+def workDataFrame(currentData):
 
-	for index, firm in currentData.iterrows(): # for every single company
-		print('Working on %s', index) 
-		logger.info('(%s) Working on: %s', index, firm['Company_Name'] )
-		Trade_Description = firm['Trade_English'] # Extract Trade Description
-		df = pd.DataFrame(columns=range(0,300)) # Empty Frame for vectors
-		df = df.add_prefix('TE_') # add prefix
+    # create empty data frame for working
+    converted = pd.DataFrame(columns=range(0, len(currentData.columns) + 300))
+    df = pd.DataFrame(columns=range(0, 300))  # vectors
+    df = df.add_prefix("TE_")  # prefix for vectors
+    columns = currentData.columns  # naming
+    columns = columns.append(df.columns)  # combine
+    converted.columns = columns  # set names
 
-		for word in Trade_Description: # for every word => build vector
-			try:
-				df = df.append(pd.Series(model.wv[word],index=df.columns), ignore_index=True) # append every vector to df
-			except:
-				continue
-		logger.info('(%s) Working on: %s => %s entries', index, firm['Company_Name'], len(df) )
-		converted.loc[index] = currentData.loc[index].append(df.mean()) # calculate mean per company and add to converted
+    for index, firm in currentData.iterrows():  # for every single company
+        print("Working on %s", index)
+        logger.info("(%s) Working on: %s", index, firm["Company_Name"])
+        Trade_Description = firm["Trade_English"]  # Extract Trade Description
+        df = pd.DataFrame(columns=range(0, 300))  # Empty Frame for vectors
+        df = df.add_prefix("TE_")  # add prefix
 
-	return converted # return converted to the pool function
+        for word in Trade_Description:  # for every word => build vector
+            try:
+                df = df.append(
+                    pd.Series(model.wv[word], index=df.columns), ignore_index=True
+                )  # append every vector to df
+            except:
+                continue
+        logger.info(
+            "(%s) Working on: %s => %s entries", index, firm["Company_Name"], len(df)
+        )
+        converted.loc[index] = currentData.loc[index].append(
+            df.mean()
+        )  # calculate mean per company and add to converted
+
+    return converted  # return converted to the pool function
+
 
 # %% Prep Data
-print('starting')
+print("starting")
 import multiprocessing
 
-#df = data.loc[1:100].copy() # only 100
-df = data.copy() # all of them
+# df = data.loc[1:100].copy() # only 100
+df = data.copy()  # all of them
 
 # create as many processes as there are CPUs on your machine
 num_processes = multiprocessing.cpu_count() - 1
 print(num_processes)
 # calculate the chunk size as an integer
-chunk_size = int(df.shape[0]/num_processes)
+chunk_size = int(df.shape[0] / num_processes)
 
 # this solution was reworked from the above link.
 # will work even if the length of the dataframe is not evenly divisible by num_processes
-chunks = [df.loc[df.index[i:i + chunk_size]] for i in range(0, df.shape[0], chunk_size)]
-print('chunked')
+chunks = [
+    df.loc[df.index[i : i + chunk_size]] for i in range(0, df.shape[0], chunk_size)
+]
+print("chunked")
 # %% actually do it
 
 # create our pool with `num_processes` processes
@@ -104,33 +116,21 @@ result = pool.map(workDataFrame, chunks)
 
 # %% combine
 
-#create empty data frame for working
-converted = pd.DataFrame(columns=range(0,len(data.columns) + 300))
-df = pd.DataFrame(columns=range(0,300)) # vectors
-df = df.add_prefix('TE_') # prefix for vectors
-columns = data.columns # naming
-columns = columns.append(df.columns) # combine
-converted.columns = columns # set names
+# create empty data frame for working
+converted = pd.DataFrame(columns=range(0, len(data.columns) + 300))
+df = pd.DataFrame(columns=range(0, 300))  # vectors
+df = df.add_prefix("TE_")  # prefix for vectors
+columns = data.columns  # naming
+columns = columns.append(df.columns)  # combine
+converted.columns = columns  # set names
 
 for i in result:
-   # since result[i] is just a dataframe
-   # we can reassign the original dataframe based on the index of each chunk
-   converted = converted.append(i)
+    # since result[i] is just a dataframe
+    # we can reassign the original dataframe based on the index of each chunk
+    converted = converted.append(i)
 
 
 # %% write back to disk
 
-pq.write_table(pa.Table.from_pandas(converted), dataPath + '/converted.parquet')
-converted.sample(1000).to_excel(dataPath + 'converted.xlsx')
-
-
-
-
-
-
-
-
-
-
-
-
+pq.write_table(pa.Table.from_pandas(converted), dataPath + "/converted.parquet")
+converted.sample(1000).to_excel(dataPath + "converted.xlsx")

@@ -1,10 +1,14 @@
 # -*- coding: utf-8 -*-
 
-import sys
-import pyarrow.parquet as pq
-import pyarrow as pa
+# -*- coding: utf-8 -*-
 
+# %% imports
 
+import sys, os
+import pandas as pd
+
+print(sys.path)
+print(os.getcwd())
 # %% Logging Setup
 
 try:
@@ -21,18 +25,9 @@ logger.info("WD is set to   " + filePath)
 dataPath = filePath + "/02_Data/"
 logger.info("Writing to	 " + dataPath)
 
-# %% load data
+# %% Import Data
 
-data = pq.read_table(dataPath + "/data.clean.parquet").to_pandas()
+logger.info("Reading Parquet File")
+data = pd.read_parquet(dataPath + "/data.vectorized.1000.parquet")
 
-# %% split data
-last = 0
-split = 20000
-
-for index in range(0, 20):
-
-    pq.write_table(
-        pa.Table.from_pandas(data.iloc[last : last + split]),
-        dataPath + "/convert/convert_" + str(index) + ".parquet",
-    )
-    last = last + split
+# %%

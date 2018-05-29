@@ -13,14 +13,14 @@ import os
 try:
     filePath = __file__
     head, tail = os.path.split(filePath)
-    filePath = head + '/..'
+    filePath = head + "/.."
 except:
     filePath = os.getcwd()
 
-if (filePath == '/..'):
+if filePath == "/..":
     head, tail = os.path.split(os.getcwd())
-    filePath = head + '/..'
-    filePath = os.getcwd() + '/..'
+    filePath = head + "/.."
+    filePath = os.getcwd() + "/.."
 
 os.chdir(filePath)
 filePath = os.getcwd()
