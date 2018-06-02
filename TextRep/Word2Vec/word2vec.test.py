@@ -41,6 +41,9 @@ pp.pprint(model.wv.most_similar(["grocery"]))
 print("----------------- Similar to gas1oline -----------------")
 pp.pprint(model.wv.most_similar(["gasoline"]))
 
+# %%
 print("----------------- vector for gasoline -----------------")
 pp.pprint(model.wv["gasoline"])
+
+# %%
 pp.pprint(stats.describe(model.wv["gasoline"]))

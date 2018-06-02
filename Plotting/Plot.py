@@ -2,9 +2,14 @@
 
 # %% imports
 
-import sys, os
-import pyarrow.parquet as pq
+import os
+import sys
+
+import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
+import pyarrow.parquet as pq
+from pandas.plotting import table
 
 print(sys.path)
 print(os.getcwd())
@@ -36,7 +41,7 @@ nace_table = pq.read_table(
     dataPath + "/nacecodes.w2v.parquet"
 ).to_pandas()  # -*- coding: utf-8 -*-
 
-# %% basic stats
+da  # %% basic stats
 
 nace = data["NACE_primarycode"].astype(str)
 
@@ -88,10 +93,6 @@ plot2 = nacex["Count"].hist()
 plot2.get_figure().savefig(filePath + "/05_Plots/nace_distribution2.pdf")
 
 # %% plot combined
-
-import numpy as np
-from pandas.plotting import table
-import matplotlib.pyplot as plt
 
 
 fig, ax = plt.subplots(1, 1)

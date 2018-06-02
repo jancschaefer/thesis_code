@@ -14,14 +14,14 @@ numTranslate = 5000
 # %% Logging Setup
 
 try:
-    from Code.Translate.environment import filePath
-    from Code.Translate.dolog import logger
+    from Code.environment import filePath
+    from Code.dolog import logger
     from Code.Translate.jsTranslate_H1 import translate
     from Code.Translate.convert import convertBrokenText
 except:
     try:
-        from Translate.environment import filePath
-        from Translate.dolog import logger
+        from environment import filePath
+        from dolog import logger
         from Translate.jsTranslate_H1 import translate
         from Translate.convert import convertBrokenText
     except:
@@ -46,7 +46,7 @@ if started == "started":
 # 	# %% Initial data load
 # 	logger.info('Reading Stata File')
 # 	data = pd.read_stata(
-# '/Users/janschaefer/Dropbox/10_Thesis/02_Data/save_step4.dta', encoding='utf-8')
+# '/Users/janschaefer/Dropbox/10_Thesis/02_Data/save_step4.dta')
 #
 # 	# %% writing parquet
 # 	logger.info('Writing parquet to disk.')

@@ -33,7 +33,7 @@ logger.info("Writing to	 " + dataPath)
 # %% Import Data
 
 logger.info("Reading Parquet File")
-data = pq.read_table(dataPath + "/converted.dropped.parquet").to_pandas()
+data = pq.read_table(dataPath + "/converted.clean.parquet").to_pandas()
 
 # %% reduce data for testing purposes
 

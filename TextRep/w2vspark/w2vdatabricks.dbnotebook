@@ -1,0 +1,236 @@
+# -*- coding: utf-8 -*-
+
+### This is extracted from a databricks notebook that was run on microsoft azure to transform the data.
+
+# Databricks notebook source
+spark.conf.set(
+  "fs.azure.account.key.lrda.blob.core.windows.net",
+  "[[azure blob storage key -- redacted for security reasons]]")
+data = spark.read.parquet("wasbs://kdz@lrda.blob.core.windows.net/data.clean.nodups.parquet") # read data from Azure Blob Storage
+
+# COMMAND ----------
+
+# %% import necessary packages
+from pyspark.sql import *
+from pyspark.sql.functions import col, udf
+
+# %% function to create vectors from strings
+def createVector(theModel,theWord):
+  l = [([theWord])]
+  rdd = sc.parallelize(l)
+  vec = rdd.map(lambda x: Row(Trade_English=x))
+  vec = sqlContext.createDataFrame(vec)
+  vec = model.transform(vec).select(col('Trade_English_Vector')).toPandas()
+  vec = vec['Trade_English_Vector'][0]
+  return vec
+
+# COMMAND ----------
+
+# import W2V
+from pyspark.ml.feature import RegexTokenizer, Word2Vec
+
+# COMMAND ----------
+
+# %% Apply settings
+word2Vec = Word2Vec(vectorSize=1000, # 1000 dimensional vector
+                    minCount=5, # words need to appear at least 5 times
+                    inputCol="Trade_English",
+                    outputCol="Trade_English_Vector",
+                    windowSize=5, # distance to look
+                    numPartitions=1,
+                    maxIter=1)
+
+# COMMAND ----------
+
+model = word2Vec.fit(data) # fit model to data
+
+# COMMAND ----------
+
+data_w2v = model.transform(data) # transform data into vectorised form
+
+# COMMAND ----------
+
+# %% mount for writeback
+dbutils.fs.mount(
+  source = "wasbs://kdz@lrda.blob.core.windows.net/",
+  mount_point = "/mnt/lrda",
+  extra_configs = {"fs.azure.account.key.lrda.blob.core.windows.net": "[[azure blob storage key -- redacted for security reasons]]"})
+
+# COMMAND ----------
+
+# %% drop unnecessary columns
+data = data_w2v.drop(
+		"Trade_English",
+		"Trade_Original",
+		"nace1",
+		"nace2",
+		"BvD_ID",
+		"NAICS2017_primary",
+		"NAICS2017_secondary",
+		"GUO_Name",
+		"GUO_BvDID",
+		"NACE_primarydescription",
+		"NACE_secondarydescription",
+		"NACE_secondarycode",
+		"Run", # tecnical column
+		"engineUsed", # tecnical column
+		"bvdind", # duplicate
+		"LastError", # tecnical column
+		"countryiso" # duplicate of Country_Iso
+	)
+
+# COMMAND ----------
+
+data_w2v.rdd.partitionBy(1)
+
+# COMMAND ----------
+
+# %% write vectorised file to blob storage
+data_w2v.coalesce(1).write.parquet('wasbs://kdz@lrda.blob.core.windows.net/data.transformed.w2v.2000.1.parquet')
+
+# COMMAND ----------
+
+# %% Vector is still in one column. For ML to be applied, it needs to be in n columns.
+data_w2v
+
+# COMMAND ----------
+
+te = data_w2v.select('Trade_English_Vector')
+
+# COMMAND ----------
+
+data_w2v.registerTempTable('data_w2v')
+
+# COMMAND ----------
+
+def extract(row):
+    return (row.ID, ) + tuple(float(x) for x in row.feature.values)
+df = df.rdd.map(extract).toDF(["ID"])
+
+# COMMAND ----------
+
+te.rdd.count()
+
+# COMMAND ----------
+
+dfrdd = data_w2v.rdd
+
+# COMMAND ----------
+
+# %% set vector length
+%scala
+
+val vectorLength = tev.rdd.map(x => x.toArray.length).max()
+
+# COMMAND ----------
+
+tev = te["Trade_English_Vector"]
+
+# COMMAND ----------
+
+# %% define scala function to map vector to columns, get data into scala environment
+%scala
+import org.apache.spark.sql.types.{StructType, StructField, StringType, IntegerType};
+import org.apache.spark.ml.linalg.Vectors
+
+def getSchema(myArray : Array[Int]): StructType = {
+    var schemaArray = scala.collection.mutable.ArrayBuffer[StructField]()
+    for((el,idx) <- myArray.view.zipWithIndex){
+        schemaArray += StructField("col"+idx , IntegerType, true)
+    }
+    StructType(schemaArray)
+}
+
+val data_w2v = spark.sql("select * from data_w2v")
+
+# COMMAND ----------
+
+# MAGIC %scala
+# MAGIC
+# MAGIC
+# MAGIC val te = data_w2v.select("Trade_English_Vector").toDF()
+
+# COMMAND ----------
+
+# %% explode data into columns
+%scala
+
+
+%python
+
+@udf("array<integer>")
+def indices(v):
+   if isinstance(v, DenseVector):
+      return list(range(len(v)))
+   if isinstance(v, SparseVector):
+      return v.indices.tolist()
+
+val flat = data_w2v.select("*", explode(indices("Trade_English_Vector"))).show()
+
+# COMMAND ----------
+
+from pyspark.sql.functions import udf, explode
+from pyspark.sql.types import *
+from pyspark.ml.linalg import *
+
+@udf("array<integer>")
+def indices(v):
+   if isinstance(v, DenseVector):
+      return list(range(len(v)))
+   if isinstance(v, SparseVector):
+      return v.indices.tolist()
+
+flat = data_w2v.select("Company_Name", explode(indices("Trade_English_Vector")))
+
+# COMMAND ----------
+
+# %% create columns for vector
+%scala
+val x = List.tabulate(1000)(_ + 1).map(i => "TE_"+i)
+
+# COMMAND ----------
+
+# MAGIC %scala
+
+# COMMAND ----------
+
+# MAGIC %scala
+# MAGIC //perform split
+# MAGIC
+# MAGIC import org.apache.spark.sql.functions._
+# MAGIC import org.apache.spark.ml._
+# MAGIC
+# MAGIC // A UDF to convert VectorUDT to ArrayType
+# MAGIC val vecToArray = udf( (xs: linalg.Vector) => xs.toArray )
+# MAGIC
+# MAGIC // Add a ArrayType Column
+# MAGIC val dfArr = data_w2v.withColumn("Trade_English_Array" , vecToArray($"Trade_English_Vector") )
+# MAGIC
+# MAGIC val elements = List.tabulate(1000)(_ + 1).map(i => "TE_"+i)
+# MAGIC val sqlExpr = elements.zipWithIndex.map{ case (alias, idx) => col("Trade_English_Array").getItem(idx).as(alias) }
+# MAGIC
+# MAGIC val converted = dfArr.select( (col("*") +: sqlExpr) :_*)
+# MAGIC display(converted)
+
+# COMMAND ----------
+
+# MAGIC %scala
+# MAGIC //writing back split data
+# MAGIC //converted.registerTempTable("data_flat_1000")
+# MAGIC converted.createOrReplaceTempView("data_flat_1000")
+
+# COMMAND ----------
+
+# %% get data back into python and write it to blob as single parquet file
+df = spark.sql('select * from data_flat_1000')
+df = df.drop('Trade_English_Vector').drop('Trade_English').drop('Trade_English_Array')
+df.coalesce(1).write.parquet('wasbs://kdz@lrda.blob.core.windows.net/data.transformed.w2v.1000.parquet')
+#df.drop('Trade_English_Vector').drop('Trade_English').drop('Trade_English_Array').write.csv('wasbs://kdz@lrda.blob.core.windows.net/data.transformed.w2v.1000.csv')
+
+# COMMAND ----------
+
+df.dtypes
+
+# COMMAND ----------
+
+

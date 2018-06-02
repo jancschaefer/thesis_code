@@ -32,37 +32,31 @@ logger.info("Reading Parquet File")
 data = pq.read_table(dataPath + "/data.parquet").to_pandas()
 
 # %% Clean Data with pandas
-withETD = data[
+data = data[
     data["Trade_English"] != ""
 ].copy()  # Remove rows with empty trade descriptions :: ETD ^= English Trade Description
 
-withETD.loc[:, "Trade_English"] = withETD.loc[:, "Trade_English"].astype(str)
+# Remove registered item for german companies
+# Remove ivnost for chech companies
+# Remove special characters
+# Remove multiple whitespaces
+# only keep text
+# Convert all text to lowercase
+# Remove leading and tailing spaces
+data.loc[:, "Trade_English"] = (
+    data.loc[:, "Trade_English"]
+    .astype(str)
+    .str.replace("Registered item:", "")
+    .str.replace("ivnost:", "")
+    .str.replace(r"([\:\?\,\.\|\(\)\"\'\\]\s*){1,}", " ")
+    .str.replace(r"([\s+])", " ")
+    .str.replace(r"[^A-Za-z\s]+", "")
+    .str.lower()
+    .str.strip()
+)
 
-withETD.loc[:, "Trade_English"] = withETD.loc[:, "Trade_English"].str.replace(
-    "Registered item:", ""
-)  # Remove registered item for german companies
-withETD.loc[:, "Trade_English"] = withETD.loc[:, "Trade_English"].str.replace(
-    "ivnost:", ""
-)  # Remove ivnost for chech companies
-withETD.loc[:, "Trade_English"] = withETD.loc[:, "Trade_English"].str.replace(
-    r"([\:\?\,\.\|\(\)\"\'\\]\s*){1,}", " "
-)  # Remove special characters
-withETD.loc[:, "Trade_English"] = withETD.loc[:, "Trade_English"].str.replace(
-    r"([\s+])", " "
-)  # Remove multiple whitespaces
-withETD.loc[:, "Trade_English"] = withETD.loc[:, "Trade_English"].str.replace(
-    r"[^A-Za-z\s]+", ""
-)  # only keep text
-
-withETD.loc[:, "Trade_English"] = withETD.loc[
-    :, "Trade_English"
-].str.lower()  # Convert all text to lowercase
-withETD.loc[:, "Trade_English"] = withETD.loc[
-    :, "Trade_English"
-].str.strip()  # Remove leading and tailing spaces
-
-withETD = withETD[
-    withETD["Trade_English"] != ""
+data = data[
+    data["Trade_English"] != ""
 ].copy()  # Remove remaining rows with empty trade descriptions
 
 # %% prepare stopwords and other language processing
@@ -75,7 +69,7 @@ stop = stop1 | stop2
 
 # %% tokenizing the data
 
-tradeEnglish = withETD.loc[:, "Trade_English"]
+tradeEnglish = data.loc[:, "Trade_English"]
 
 tradeEnglish = (
     tradeEnglish.str.lower().str.split()
@@ -95,7 +89,7 @@ tradeEnglish = tradeEnglish.apply(
 )  # reduce words to stems; e.g. products => product
 
 # %% Join back with main data
-withETD.loc[:, "Trade_English"] = tradeEnglish
+data.loc[:, "Trade_English"] = tradeEnglish
 
 # %% Exploratory
 
@@ -103,13 +97,13 @@ withETD.loc[:, "Trade_English"] = tradeEnglish
 
 index = 0
 numwords = []
-withETD.loc[:, "numwords"] = 0
-for index, row in withETD.iterrows():
+data.loc[:, "numwords"] = 0
+for index, row in data.iterrows():
     numwords.append(len(row["Trade_English"]))
 
-withETD.loc[:, "numwords"] = numwords
+data.loc[:, "numwords"] = numwords
 
 
 # %% write clean data to disk
-pq.write_table(pa.Table.from_pandas(withETD), dataPath + "/data.clean.parquet")
-withETD.loc[:, "Trade_English"].to_csv(dataPath + "/words.txt")
+pq.write_table(pa.Table.from_pandas(data), dataPath + "/data.clean.parquet")
+data.loc[:, "Trade_English"].to_csv(dataPath + "/words.txt")

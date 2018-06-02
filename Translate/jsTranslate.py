@@ -12,6 +12,7 @@ import xml.etree.cElementTree as et
 # Replace the subscriptionKey string value with your valid subscription key.
 subscriptionKey = "306fb3a1af9746f4a8e0b7c1906d670e"
 
+
 host = "api.microsofttranslator.com"
 path = "/V2/Http.svc/Translate"
 
